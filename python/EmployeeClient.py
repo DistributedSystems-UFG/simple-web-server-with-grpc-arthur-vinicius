@@ -7,30 +7,50 @@ import EmployeeService_pb2_grpc
 
 import const
 
-def run():
-    with grpc.insecure_channel(const.IP+':'+const.PORT) as channel:
-        stub = EmployeeService_pb2_grpc.EmployeeServiceStub(channel)
 
-        # Query an employee's data
-        response = stub.GetEmployeeDataFromID(EmployeeService_pb2.EmployeeID(id=101))
-        print ('Employee\'s data: ' + str(response))
+def Client():
+    with grpc.insecure_channel(const.IP + ':' + const.PORT) as channel:
+        stub = EmployeeService_pb2_grpc.TemperatureServiceStub(channel)
 
-        # Add a new employee
-        response = stub.CreateEmployee(EmployeeService_pb2.EmployeeData(id=301, name='Jose da Silva', title='Programmer'))
-        print ('Added new employee ' + response.status)
+        print('1 - Insert data')
+        print('2 - List all data')
+        print('3 - Search by ID')
+        print('4 - Search by date')
+        print('5 - Search by local')
+        option = int(input())
 
-        # Change an employee's title
-        response = stub.UpdateEmployeeTitle(EmployeeService_pb2.EmployeeTitleUpdate(id=301, title='Senior Programmer'))
-        print ('Updated employee ' + response.status)
+        if option == 1:
+            id = int(input("Input an ID: "))
+            date = input("Input a date: ")
+            local = input("Input a local: ")
+            temperature = input("Input a temperature: ")
 
-        # Delete an employee
-        response = stub.DeleteEmployee(EmployeeService_pb2.EmployeeID(id=201))
-        print ('Deleted employee ' + response.status)
+            response = stub.CadastrarTemperature(
+                EmployeeService_pb2.Temperature(id=id, date=date, local=local, temperature=temperature))
+            print('Insert data: ' + str(response));
+        
+        elif option == 2:
+        	response = stub.ListAllData(EmployeeService_pb2.EmptyMessage())
+            print('All data: ' + str(response));
+        
+        elif option == 3:
+        	id_search = int(input('Input an ID: '))
+            response = stub.GetTemperatureByID(EmployeeService_pb2.Id(id=id_search))
+            print('Search by ID: \n' + str(response));
+        
+        elif option == 4:
+        	date_search = input('Input a date=e: ')
+            response = stub.GetTemperatureByDate(EmployeeService_pb2.date(date=date_search))
+            print('Search by date: ' + str(response));
+        
+        elif option == 5:
+        	local_search = input("Input a local: ")
+            response = stub.GetTemperatureByLocal(
+                EmployeeService_pb2.local(local=local_search))
+            print('Search by local: ' + str(response));
+            
 
-        # List all employees
-        response = stub.ListAllEmployees(EmployeeService_pb2.EmptyMessage())
-        print ('All employees: ' + str(response))
 
 if __name__ == '__main__':
     logging.basicConfig()
-    run()
+    Client()

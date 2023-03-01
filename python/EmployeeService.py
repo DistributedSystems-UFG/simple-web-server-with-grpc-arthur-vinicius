@@ -5,57 +5,60 @@ import grpc
 import EmployeeService_pb2
 import EmployeeService_pb2_grpc
 
-empDB=[
- {
- 'id':101,
- 'name':'Saravanan S',
- 'title':'Technical Leader'
- },
- {
- 'id':201,
- 'name':'Rajkumar P',
- 'title':'Sr Software Engineer'
- }
- ]
+all_data = [{'id':1,'date':'15/01/2023','local':'Recife','temperature':31},{'id':2,'date':'20/12/2022','local':'Salvador','temperature':28},{'id':3,'date':'22/12/2022','local':'Manaus','temperature':25},{'id':4,'date':'25/12/2022','local':'Rio de Janeiro','temperature':30},{'id':5,'date':'26/12/2022','local':'Fortaleza','temperature':32},{'id':6,'date':'27/12/2022','local':'Brasilia','temperature':15},{'id':7,'date':'01/01/2023','local':'Porto Alegre','temperature':18},{'id':8,'date':'05/01/2023','local':'Goiânia','temperature':25},{'id':9,'date':'10/01/2023','local':'Sao Paulo','temperature':20},{'id':10,'date':'15/01/2023','local':'Belo Horizonte','temperature':27}]
 
-class EmployeeServer(EmployeeService_pb2_grpc.EmployeeServiceServicer):
+class TemperatureService(EmployeeService_pb2_grpc.TemperatureServiceService):
+    def InsertTemperature(self, request, context):
+        data = {
+            'id': request.id,
+            'date': request.date,
+            'local': request.name.local,
+            'temperature': request.temperature
+        }
+        all_data.append(data)
+        return EmployeeService_pb2.StatusReply(status='OK')
 
-  def CreateEmployee(self, request, context):
-    dat = {
-    'id':request.id,
-    'name':request.name,
-    'title':request.title
-    }
-    empDB.append(dat)
-    return EmployeeService_pb2.StatusReply(status='OK')
+    def GetTemperatureByID(self, request, context):
+        usr = [item for item in all_data if (item['id'] == request.id)]
 
-  def GetEmployeeDataFromID(self, request, context):
-    usr = [ emp for emp in empDB if (emp['id'] == request.id) ] 
-    return EmployeeService_pb2.EmployeeData(id=usr[0]['id'], name=usr[0]['name'], title=usr[0]['title'])
+        return EmployeeService_pb2.Temperature(id=usr[0]['id'], date=usr[0]['date'], local=usr[0]['local'],
+                                                  temperature=usr[0]['temperature'])
 
-  def UpdateEmployeeTitle(self, request, context):
-    usr = [ emp for emp in empDB if (emp['id'] == request.id) ]
-    usr[0]['title'] = request.title
-    return EmployeeService_pb2.StatusReply(status='OK')
+    def GetTemperatureByDate(self, request, context):
+        filtered_list = [item for item in all_data if (item['date'] == request.date)]
+        list = EmployeeService_pb2.TemperatureList()
+        for item in filtered_list:
+            emp_date = EmployeeService_pb2.Temperature(id=item['id'], date=item['date'],
+                                                          local=item['local'],
+                                                          temperature=item['temperature'])
+            list.temperature_data.append(emp_date)
+        return list
 
-  def DeleteEmployee(self, request, context):
-    usr = [ emp for emp in empDB if (emp['id'] == request.id) ]
-    if len(usr) == 0:
-      return EmployeeService_pb2.StatusReply(status='NOK')
+        return EmployeeService_pb2.TemperatureList(filtered_list)
 
-    empDB.remove(usr[0])
-    return EmployeeService_pb2.StatusReply(status='OK')
+    def GetTemperatureByLocal(self, request, context):
+        filtered_list = [item for item in all_data if (item['local'] == request.local)]
+        list = EmployeeService_pb2.TemperatureList()
+        for item in filtered_list:
+            emp_date = EmployeeService_pb2.Temperature(id=item['id'], date=item['date'],
+                                                          local=item['local'],
+                                                          temperature=item['temperature'])
+            list.temperature_data.append(emp_date)
+        return list
 
-  def ListAllEmployees(self, request, context):
-    list = EmployeeService_pb2.EmployeeDataList()
-    for item in empDB:
-      emp_data = EmployeeService_pb2.EmployeeData(id=item['id'], name=item['name'], title=item['title']) 
-      list.employee_data.append(emp_data)
-    return list
+    def ListAllData(self, request, context):
+        list = EmployeeService_pb2.TemperatureList()
+        for item in all_data:
+            emp_date = EmployeeService_pb2.Temperature(id=item['id'], date=item['date'],
+                                                          local=item['local'],
+                                                          temperature=item['temperature'])
+            list.temperature_data.append(emp_date)
+        return list
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    EmployeeService_pb2_grpc.add_EmployeeServiceServicer_to_server(EmployeeServer(), server)
+    EmployeeService_pb2_grpc.add_TemperatureServiceService_to_server(TemperatureService(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     server.wait_for_termination()
